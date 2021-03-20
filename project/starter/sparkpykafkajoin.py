@@ -178,14 +178,21 @@ riskScoreByBirthYear = customerRiskStreamingDF.join(emailAndBirthYearStreamingDF
 # |Sarah.Clark@test.com| -4.0|Sarah.Clark@test.com|     1957|
 # +--------------------+-----+--------------------+---------+
 #
-# In this JSON Format {"customer":"Santosh.Fibonnaci@test.com","score":"28.5","email":"Santosh.Fibonnaci@test.com","birthYear":"1963"} 
-riskScoreByBirthYear.selectExpr('cast(customer as string) as key', 'to_json(struct(*)) as value')\
-    .writeStream \
-    .format('kafka') \
-    .option('kafka.bootstrap.servers', 'localhost:9092') \
-    .option('topic', 'risk-graph') \
-    .option('checkpointLocation', '/tmp/kafkacheckpoint') \
-    .start() \
-    .awaitTermination()
+# In this JSON Format {"customer":"Santosh.Fibonnaci@test.com","score":"28.5","email":"Santosh.Fibonnaci@test.com","birthYear":"1963"}
+query_kafka = riskScoreByBirthYear.selectExpr('cast(customer as string) as key', 'to_json(struct(*)) AS value').writeStream \
+        .outputMode('append') \
+        .format("kafka") \
+        .option("kafka.bootstrap.servers", "localhost:9092") \
+        .option("FailOnDataLoss" , "false") \
+        .option("checkpointLocation", "/tmp/kafkacheckpoint") \
+        .option("topic", "risk-graph") \
+        .start()
 
-# riskScoreByBirthYear.selectExpr('cast(customer as string) as key', 'to_json(struct(*)) as value').writeStream.outputMode('append').format('console').start().awaitTermination()
+query_console = riskScoreByBirthYear.selectExpr('cast(customer as string) as key', 'to_json(struct(*)) AS value').writeStream \
+        .outputMode('append') \
+        .format('console') \
+        .option('truncate' , False) \
+        .start()
+
+query_kafka.awaitTermination()
+query_console.awaitTermination()

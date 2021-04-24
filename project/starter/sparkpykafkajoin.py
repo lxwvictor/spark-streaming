@@ -48,10 +48,12 @@ spark.sparkContext.setLogLevel('WARN')
 
 # TO-DO: using the spark application object, read a streaming dataframe from the Kafka topic redis-server as the source
 # Be sure to specify the option that reads all the events from the topic including those that were published before you started the spark stream
+# The kafka bootstrap server host and port refers to below line of code from docker-compose.yaml, refer to https://rmoff.net/2018/08/02/kafka-listeners-explained/ for more details
+# KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092"
 redisServerRawStreamingDF = spark \
     .readStream \
     .format('kafka') \
-    .option('kafka.bootstrap.servers', 'localhost:9092') \
+    .option('kafka.bootstrap.servers', 'kafka:19092') \
     .option('subscribe', 'redis-server') \
     .option('startingOffsets', 'earliest') \
     .load()
@@ -133,7 +135,7 @@ emailAndBirthYearStreamingDF = emailAndBirthDayStreamingDF.select('email', split
 stediEventsRawStreamingDF = spark \
     .readStream \
     .format('kafka') \
-    .option('kafka.bootstrap.servers', 'localhost:9092') \
+    .option('kafka.bootstrap.servers', 'kafka:19092') \
     .option('subscribe', 'stedi-events') \
     .option('startingOffsets', 'earliest') \
     .load()
@@ -182,7 +184,7 @@ riskScoreByBirthYear = customerRiskStreamingDF.join(emailAndBirthYearStreamingDF
 query_kafka = riskScoreByBirthYear.selectExpr('cast(customer as string) as key', 'to_json(struct(*)) AS value').writeStream \
         .outputMode('append') \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", "localhost:9092") \
+        .option("kafka.bootstrap.servers", "kafka:19092") \
         .option("FailOnDataLoss" , "false") \
         .option("checkpointLocation", "/tmp/kafkacheckpoint") \
         .option("topic", "risk-graph") \

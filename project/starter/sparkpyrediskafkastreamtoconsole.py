@@ -51,7 +51,7 @@ spark.sparkContext.setLogLevel('WARN')
 redisServerRawStreamingDF = spark \
     .readStream \
     .format('kafka') \
-    .option('kafka.bootstrap.servers', 'localhost:9092') \
+    .option('kafka.bootstrap.servers', 'kafka:19092') \
     .option('subscribe', 'redis-server') \
     .option('startingOffsets', 'earliest') \
     .load()
@@ -148,4 +148,4 @@ emailAndBirthYearStreamingDF = emailAndBirthDayStreamingDF.select('email', split
 # Run the python script by running the command from the terminal:
 # /home/workspace/submit-redis-kafka-streaming.sh
 # Verify the data looks correct 
-emailAndBirthYearStreamingDF.writeStream.outputMode('append').format('console').start().awaitTermination()
+emailAndBirthYearStreamingDF.writeStream.outputMode('append').format('console').option('truncate' , False).start().awaitTermination()
